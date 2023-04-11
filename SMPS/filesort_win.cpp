@@ -156,9 +156,9 @@ int main()
 {  
     struct _finddata_t c_file;
     intptr_t hFile;
-    std::string finder_path = "*.mp3";
+    std::string finder_path = "*.csv";
     if( (hFile = _findfirst( finder_path.c_str(), &c_file )) == -1L )
-        printf( "No *.mp3 files in current directory!\n" );
+        printf( "No *.csv files in current directory!\n" );
     else
     {
         std::cout << "Press Anykey to Continue/" << std::endl;
