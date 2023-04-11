@@ -51,6 +51,11 @@ data_point getDataPoint(std::string filename, double required_wavelength)
     int index_ = 0;
     double wavelength = 0.0;
     std::string temp_data;
+    if (!fp.good())
+    {
+        printf("DataPoint Reading Error\n");
+        return result;
+    }
     while (getline(fp, line))
     {   //read data file by line
         std::string item;
@@ -96,11 +101,21 @@ data_point getDataPoint(std::string filename, double required_wavelength)
 int main()
 {
     double test = 600.0;
+    std::cout << "Input the wavelength you want to collect:" << std::endl;
+    while (!(std::cin>>test) && (test>870))
+    {
+        std::cout << "Not available, Retry:" << std::endl;
+    };
+    printf("The target wavelength is %.2f;\n", test);
+    std::string folder_name_part;
+    std::cout << "Provide the data folder name:" << std::endl;
+    std::cin >> folder_name_part;
+    printf("The target wavelength is %.2f;\nThe target data folder is %s.\n", test, folder_name_part.c_str());
     data_point temp_data;
     std::vector<data_point> result_data;
     struct dirent *dirp;
     std::string filename;
-    std::string folder_name = "./scan/";
+    std::string folder_name = "./"+folder_name_part+"/";
     DIR* dir = opendir(folder_name.c_str());
     while ((dirp = readdir(dir)) != nullptr) {
         if (dirp->d_type == DT_REG) {
@@ -116,17 +131,18 @@ int main()
     // write to csv
     // output
     std::ofstream in;
-    in.open("scan.csv", std::ios::trunc); // ios::trunc clean file during open
+    std::string output_filename = folder_name_part + ".csv";
+    in.open(output_filename.c_str(), std::ios::trunc); // ios::trunc clean file during open
     std::string temp_line;
-    if (in == NULL)
+    if (!in.good())
     {
-        printf("Open file failed \n");
+        printf("Create output file failed \n");
         return 0;
     }
     for (size_t i = 0; i < result_data.size(); i++)
     {
         temp_line = result_data[i].time_stamp + ", " + result_data[i].transmission;
-        std::cout << temp_line << std::endl;
+        // std::cout << temp_line << std::endl;
         in << temp_line << "\n";
     }
     in.close();   
