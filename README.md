@@ -1,4 +1,4 @@
-# NRG-FormatTools
+# EEM-FormatTools
 ## SMPS Single Mode Output Format
 #### Input Requirements
 + The file should be in csv format
