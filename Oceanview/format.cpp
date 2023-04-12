@@ -6,9 +6,12 @@
 #include <cstdlib>
 #include <regex>
 #include <algorithm>
-
+#ifdef _WIN32
+#include <io.h>
+#else
 // This is mac capiable version of source code
 #include <dirent.h>
+#endif
 
 struct data_point
 {
@@ -113,11 +116,39 @@ int main()
     printf("The target wavelength is %.2f;\nThe target data folder is %s.\n", test, folder_name_part.c_str());
     data_point temp_data;
     std::vector<data_point> result_data;
-    struct dirent *dirp;
     std::string filename;
+
+#ifdef _WIN32
+    struct _finddata_t c_file;
+    intptr_t hFile;
+    std::string finder_path = ".\\" + folder_name_part + "\\*.txt";
+    if( (hFile = _findfirst( finder_path.c_str(), &c_file )) == -1L )
+        printf( "Cant find target folder path: %s!\n", finder_path.c_str());
+    else
+    {
+        std::cout << "Press Anykey to Continue\n" << std::endl;
+        std::cin.get();
+        do
+        {
+            std::string temp(c_file.name);
+            // output the files located in current folder
+            printf( " %-12s %9ld has been converted\n", c_file.name, c_file.size);
+            temp_data = getDataPoint(".\\" + folder_name_part + "\\" + temp, test);
+            // printf("transmission: %s\n", temp_data.transmission.c_str());
+            result_data.push_back(temp_data);
+        } while( _findnext( hFile, &c_file ) == 0 );
+        _findclose( hFile );
+    }
+#else
+    struct dirent *dirp;
     std::string folder_name = "./"+folder_name_part+"/";
     DIR* dir = opendir(folder_name.c_str());
-    while ((dirp = readdir(dir)) != nullptr) {
+    if ((dirp = readdir(dir)) == nullptr)
+    {
+        printf( "Cant find target folder path!\n" );
+        return 0;
+    }
+    while (dirp != nullptr) {
         if (dirp->d_type == DT_REG) {
             // printf("%s\n", dirp->d_name);
             filename = dirp->d_name;
@@ -125,8 +156,11 @@ int main()
             // printf("transmission: %s\n", temp_data.transmission.c_str());
             result_data.push_back(temp_data);
         }
+        dirp = readdir(dir);
     }
     closedir(dir);
+#endif
+
     std::sort(result_data.begin(), result_data.end(), compareByTime);
     // write to csv
     // output
@@ -146,6 +180,7 @@ int main()
         in << temp_line << "\n";
     }
     in.close();   
-
+    std::cout << "Press Anykey to Continue\n" << std::endl;
+    std::cin.get();
     return 0;
 }
