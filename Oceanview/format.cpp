@@ -11,6 +11,7 @@
 #else
 // This is mac capiable version of source code
 #include <dirent.h>
+#include <unistd.h>
 #endif
 
 struct data_point
@@ -27,6 +28,16 @@ bool compareByTime(const data_point &a, const data_point &b)
 // extract the time
 int getCollectTime(data_point* data_, std::string filename)
 {
+    // printf("filename: %s\n", filename.c_str());
+    std::string seperater = "/";
+#ifdef _WIN32
+    seperater = "\\";
+#endif
+    if (filename.rfind(seperater) != filename.npos)
+    {
+        filename = filename.substr(filename.rfind(seperater));
+    }
+    // printf("filename: %s\n", filename.c_str());
     int temp_pos_1 = filename.rfind("-");
     int temp_pos_2 = filename.rfind(".");
     std::string temp_time_ms = filename.substr(temp_pos_1+1, temp_pos_2-temp_pos_1-1);
@@ -101,7 +112,7 @@ data_point getDataPoint(std::string filename, double required_wavelength)
     return result;
 }
 
-int main()
+int main(int argc, char** argv)
 {
     double test = 600.0;
     std::cout << "Input the wavelength you want to collect:" << std::endl;
@@ -140,19 +151,22 @@ int main()
         _findclose( hFile );
     }
 #else
+    std::string abs_path(argv[0]);
+    chdir(abs_path.substr(0,abs_path.rfind("/")).c_str());
+    std::string folder_name = "./" + folder_name_part + "/";
+    printf("The current directory is: %s\n", folder_name.c_str());
     struct dirent *dirp;
-    std::string folder_name = "./"+folder_name_part+"/";
     DIR* dir = opendir(folder_name.c_str());
-    if ((dirp = readdir(dir)) == nullptr)
+    if (dir == NULL || (dirp = readdir(dir)) == nullptr)
     {
-        printf( "Cant find target folder path!\n" );
+        printf("Cant find path\n");
         return 0;
     }
     while (dirp != nullptr) {
         if (dirp->d_type == DT_REG) {
             // printf("%s\n", dirp->d_name);
             filename = dirp->d_name;
-            temp_data = getDataPoint(folder_name+filename, test);
+            temp_data = getDataPoint(folder_name + filename, test);
             // printf("transmission: %s\n", temp_data.transmission.c_str());
             result_data.push_back(temp_data);
         }
